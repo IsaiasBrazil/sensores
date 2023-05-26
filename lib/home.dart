@@ -38,7 +38,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return  Scaffold(
       appBar: AppBar(
-        title: const Text('Sample Code'),
+        title: const Text('Sensores'),
       ),
       body: Center(
         child: SingleChildScrollView(
