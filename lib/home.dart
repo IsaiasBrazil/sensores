@@ -14,24 +14,27 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   MqttHandler mqttHandler = MqttHandler();
-
   var txtTemp = TextEditingController();
   var txtHum = TextEditingController();
   var txtGas = TextEditingController();
   late Timer timer;
 
-  bool ativo=true;
+  late bool ativo = false;
+
+  late bool desastre= false;
 
   @override
   void initState() {
     super.initState();
     mqttHandler.connect();
+
   }
 
   @override
   void dispose() {
     timer.cancel(); // Cancelar o Timer ao descartar o widget
     super.dispose();
+
   }
 
   @override
@@ -45,10 +48,20 @@ class _HomeState extends State<Home> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              Text((ativo?"Sensor automático ativo":"Sensor automático desligado.")+(desastre?"+ desastre ativo":""),style: TextStyle(color: ativo?Colors.red:Colors.blue,fontSize: 20) ),
               _receber(),
               _publicar(),
-              _publicarAuto()
-
+              Container(
+                child: ElevatedButton(
+                  onPressed: _ativarAuto,
+                  child: Text(ativo ? "Desativar auto" : "Ativar auto"),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: _ativarDesastre,
+                style: ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(desastre?Colors.red:Colors.blue)),
+                child: Text(desastre ? "Desativar desastre" : "Causar desastre"),
+              )
             ],
 
           ),
@@ -58,32 +71,43 @@ class _HomeState extends State<Home> {
     );
   }
 
-  _publicarAuto() {
+  _ativarDesastre(){
+    setState(() {
+      desastre = !desastre;
+    });
+  }
 
-    return FloatingActionButton(
-      onPressed: () =>
-          setState(() {
-            ativo = ativo?false:true;
-            publicarAuto();
-          }),
-      child: Text(ativo ? "Desativar" : "Ativar"),
-    );
+  _ativarAuto(){
+    setState(() {
+      ativo = !ativo;
+      publicarAuto();
+    });
   }
 
   publicarAuto(){
     print("auto pressionado");
     if (ativo) {
-    timer = Timer.periodic(Duration(seconds: 2), (timer){
-    mqttHandler.publishMessage(
-          generateRandomData(0, 40).toString(), "temperatura");
-      mqttHandler.publishMessage(
-          generateRandomData(0, 20).toString(), "humidade");
-      mqttHandler.publishMessage(
-          generateRandomData(0, 10).toString(), "gases");
-  });
-  } else {
-  timer.cancel(); // Cancelar o Timer
-  }
+      timer = Timer.periodic(Duration(seconds: 2), (timer){
+        var tmin = desastre?-10:18; //ideal entre 18 e 24º
+        var tmax = desastre?50:24; //
+        var hmin = desastre?0:30; //ideal entre 30 e 70%
+        var hmax = desastre?100:70; //=
+        var gmin = desastre?20:0; //ideal abaixo de 20
+        var gmax = desastre?100:20; //=
+
+        mqttHandler.publishMessage(
+            generateRandomData(tmin, tmax).toString(), "temperatura");
+        mqttHandler.publishMessage(
+            generateRandomData(hmin,hmax).toString(), "humidade");
+        mqttHandler.publishMessage(
+            generateRandomData(gmin, gmax).toString(), "gases");
+      });
+    } else {
+      timer.cancel(); // Cancelar o Timer
+    }
+    setState(() {
+
+    });
   }
 
   int generateRandomData(int min, int max) {
@@ -93,23 +117,22 @@ class _HomeState extends State<Home> {
 
   _publicar() {
     return Column(
-      children: [
-        TextFormField(decoration: InputDecoration(hintText: "Temperatura"),controller: txtTemp),
-        TextFormField(decoration: InputDecoration(hintText: "Humidade"),controller: txtHum),
-        TextFormField(decoration: InputDecoration(hintText: "Gases"),controller: txtGas),
-        FloatingActionButton(
-          onPressed: () => setState(() {
-            mqttHandler.publishMessage(txtTemp.text,"temperatura");
-            mqttHandler.publishMessage(txtHum.text,"humidade");
-            mqttHandler.publishMessage(txtGas.text,"gases");
-          }
+        children: [
+          TextFormField(decoration: InputDecoration(hintText: "Temperatura"),controller: txtTemp, keyboardType: TextInputType.number,),
+          TextFormField(decoration: InputDecoration(hintText: "Humidade"),controller: txtHum, keyboardType: TextInputType.number,),
+          TextFormField(decoration: InputDecoration(hintText: "Gases"),controller: txtGas, keyboardType: TextInputType.number,),
+          FloatingActionButton(
+            onPressed: () => setState(() {
+              mqttHandler.publishMessage(txtTemp.text,"temperatura");
+              mqttHandler.publishMessage(txtHum.text,"humidade");
+              mqttHandler.publishMessage(txtGas.text,"gases");
+            }
+            ),
+            tooltip: 'Publicar',
+            child: const Text("Enviar"),
           ),
-          tooltip: 'Publicar',
-          child: const Text("Enviar"),
-        ),
-      ]
+        ]
     );
-
   }
 
   _receber() {
@@ -122,7 +145,7 @@ class _HomeState extends State<Home> {
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                Text('$value',
+                Text("$value º",
                     style: TextStyle(
                         color: Colors.deepPurpleAccent, fontSize: 35))
               ],
@@ -138,7 +161,7 @@ class _HomeState extends State<Home> {
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                Text('$value',
+                Text("$value %",
                     style: TextStyle(
                         color: Colors.deepPurpleAccent, fontSize: 35))
               ],
@@ -154,7 +177,7 @@ class _HomeState extends State<Home> {
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                Text('$value',
+                Text("$value ppm",
                     style: TextStyle(
                         color: Colors.deepPurpleAccent, fontSize: 35))
               ],
