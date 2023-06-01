@@ -96,11 +96,11 @@ class _HomeState extends State<Home> {
         var gmax = desastre?100:20; //=
 
         mqttHandler.publishMessage(
-            generateRandomData(tmin, tmax).toString(), "temperatura");
+            generateRandomData(tmin, tmax).toString(), "av1c0ntr0lz2er0/temperatura");
         mqttHandler.publishMessage(
-            generateRandomData(hmin,hmax).toString(), "humidade");
+            generateRandomData(hmin,hmax).toString(), "av1c0ntr0lz2er0/humidade");
         mqttHandler.publishMessage(
-            generateRandomData(gmin, gmax).toString(), "gases");
+            generateRandomData(gmin, gmax).toString(), "av1c0ntr0lz2er0/gases");
       });
     } else {
       timer.cancel(); // Cancelar o Timer
@@ -123,9 +123,9 @@ class _HomeState extends State<Home> {
           TextFormField(decoration: InputDecoration(hintText: "Gases"),controller: txtGas, keyboardType: TextInputType.number,),
           FloatingActionButton(
             onPressed: () => setState(() {
-              mqttHandler.publishMessage(txtTemp.text,"temperatura");
-              mqttHandler.publishMessage(txtHum.text,"humidade");
-              mqttHandler.publishMessage(txtGas.text,"gases");
+              mqttHandler.publishMessage(txtTemp.text,"av1c0ntr0lz2er0/temperatura");
+              mqttHandler.publishMessage(txtHum.text,"av1c0ntr0lz2er0/humidade");
+              mqttHandler.publishMessage(txtGas.text,"av1c0ntr0lz2er0/gases");
             }
             ),
             tooltip: 'Publicar',

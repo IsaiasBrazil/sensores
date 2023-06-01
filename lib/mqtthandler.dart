@@ -1,16 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:uuid/uuid.dart';
 
 class MqttHandler with ChangeNotifier {
   final ValueNotifier<String> temperatura = ValueNotifier<String>("");
   final ValueNotifier<String> humidade = ValueNotifier<String>("");
   final ValueNotifier<String> gases = ValueNotifier<String>("");
   late MqttServerClient client;
+  final uuid = Uuid().v4();
 
   Future<Object> connect() async {
     client = MqttServerClient.withPort(
-        'test.mosquitto.org', 'avicontrol1', 1883);
+        'test.mosquitto.org', uuid, 1883);
     client.logging(on: true);
     client.onConnected = onConnected;
     client.onDisconnected = onDisconnected;
@@ -31,6 +33,7 @@ class MqttHandler with ChangeNotifier {
         .withWillQos(MqttQos.atLeastOnce);
 
     print('MQTT_LOGS::Mosquitto client connecting....');
+    print(uuid);
 
     client.connectionMessage = connMessage;
     try {
@@ -48,9 +51,9 @@ class MqttHandler with ChangeNotifier {
       client.disconnect();
       return -1;
     }
-   receiveMessage("temperatura");
-    receiveMessage("humidade");
-    receiveMessage("gases");
+   receiveMessage("av1c0ntr0lz2er0/temperatura");
+    receiveMessage("av1c0ntr0lz2er0/humidade");
+    receiveMessage("av1c0ntr0lz2er0/gases");
     return client;
   }
 
@@ -63,15 +66,15 @@ class MqttHandler with ChangeNotifier {
       final recMess = c![0].payload as MqttPublishMessage;
       final pt =
       MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-      if(c[0].topic=="temperatura"){
+      if(c[0].topic=="av1c0ntr0lz2er0/temperatura"){
       temperatura.value = pt;
       notifyListeners();
       }
-      else if(c[0].topic=="humidade"){
+      else if(c[0].topic=="av1c0ntr0lz2er0/humidade"){
         humidade.value = pt;
         notifyListeners();
       }
-      else if(c[0].topic=="gases"){
+      else if(c[0].topic=="av1c0ntr0lz2er0/gases"){
         gases.value = pt;
         notifyListeners();
       }
